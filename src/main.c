@@ -24,6 +24,7 @@ int main(){
 
     char buff[BUFF_SIZE];
     
+    updateStorage(sysinfo);
     updateMem(meminfo,sysinfo,&buff,BUFF_SIZE);
     updateUptime(uptime,sysinfo,&buff,BUFF_SIZE);
     updateCPU(stat,sysinfo,&buff,BUFF_SIZE);

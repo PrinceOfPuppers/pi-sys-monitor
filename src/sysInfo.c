@@ -2,7 +2,9 @@
 #include "config.h"
 #include "logging.h"
 
+
 #include <stdlib.h>
+
 
 SysInfo *initSysInfo(){
     SysInfo *sysInfo = malloc(sizeof(SysInfo));
@@ -22,6 +24,16 @@ SysInfo *initSysInfo(){
     return sysInfo;
 }
 
+void updateStorage(SysInfo* sysInfo){
+    logDebug("Updating Storage Stats")
+    if (statvfs("/", &sysInfo->vfs) != 0) {
+        logFatal("Unable to parse VFS");
+    }
+    sysInfo->storageTotal = sysInfo->vfs.f_blocks * sysInfo->vfs.f_frsize;
+    sysInfo->storageAvalible = sysInfo->vfs.f_bsize * sysInfo->vfs.f_bavail;
+
+    logInfo("Storage Usage: %lubytes / %lubytes",sysInfo->storageTotal - sysInfo->storageAvalible,sysInfo->storageTotal);
+}
 
 void updateMem(FILE* fp, SysInfo* sysInfo, char *buffer, size_t buffer_size){
     logDebug("Updating Memory Stats");
@@ -46,14 +58,17 @@ void updateMem(FILE* fp, SysInfo* sysInfo, char *buffer, size_t buffer_size){
     numStr = buffer+start;
 
     buffer[end] = '\0';
-    sysInfo->memTotal = atoi(numStr);
+    sysInfo->memTotal = atol(numStr)*1024;
 
-    // Get MemFree
+    // Skip MemFree
+    fgets(buffer,buffer_size-1,fp);
+
+    // Get MemAvalible
     fgets(buffer,buffer_size-1,fp);
 
     notSuccess = regexec(&cfg.memRegex,buffer, 1, matchGroup, 0);
     if(notSuccess){
-        logFatal("Unable to Find MemFree");
+        logFatal("Unable to Find memAvalible");
     }
     
     start = matchGroup[0].rm_so;
@@ -62,9 +77,9 @@ void updateMem(FILE* fp, SysInfo* sysInfo, char *buffer, size_t buffer_size){
     numStr = buffer+start;
 
     buffer[end] = '\0';
-    sysInfo->memFree = atoi(numStr);
+    sysInfo->memAvalible = atol(numStr)*1024;
 
-    logInfo("Memory Usage: %ikb / %ikb", sysInfo->memFree, sysInfo->memTotal);
+    logInfo("Memory Usage: %lubytes / %lubytes", (sysInfo->memTotal - sysInfo->memAvalible), sysInfo->memTotal);
 
     fseek(fp, 0, SEEK_SET);
 }
@@ -116,7 +131,6 @@ void updateCPU(FILE* fp, SysInfo* sysInfo, char *buffer, size_t buffer_size){
         logFatal("Unable to Find CPU Stats");
     }
 
-    int *pntr;
     for(int i = 1; i<9; i++){ // we skip first match because we are only intrested in the sub matches
         start = matchGroup[i].rm_so;
         end = matchGroup[i].rm_eo;
@@ -137,8 +151,8 @@ void updateCPU(FILE* fp, SysInfo* sysInfo, char *buffer, size_t buffer_size){
     int dtotal = total - sysInfo->cpuStats.total;
     int dnotWorking = notWorking - sysInfo->cpuStats.notWorking;
 
-    float usage = (float)(dtotal - dnotWorking)/ (float)dtotal;
-    logInfo("CPU Usage: %f%%",usage*100);
+    sysInfo->cpuStats.cpuUsage = (float)(dtotal - dnotWorking)/ (float)dtotal;
+    logInfo("CPU Usage: %f%%",sysInfo->cpuStats.cpuUsage*100.0);
 
     sysInfo->cpuStats.total = total;
     sysInfo->cpuStats.notWorking = notWorking;
