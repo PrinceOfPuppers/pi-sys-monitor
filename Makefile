@@ -3,7 +3,7 @@ CC = gcc
 SRC = src
 BUILD = build
 PROGRAM = main
-CFLAGS= -Wall -g
+CFLAGS= -Wall 
 
 INC = -Iinclude -Ilib/clog/include -Ilib/rpi-sense-hat-api/include
 LIB = -lm -L ./lib -l:clog/lib/clog.a -l:rpi-sense-hat-api/lib/sense-api.a
@@ -14,12 +14,14 @@ FILES = $(wildcard $(SRC)/*.c)
 # directories with makefiles which must be called
 SUBMAKE = lib/clog lib/rpi-sense-hat-api
 
+# switched to debug if debug recipe is used
+SUBMAKE_RECIPE = 
 
-all: debug run
+all: compile run
 
 makeLibs:
 	for dir in $(SUBMAKE); do \
-		$(MAKE) -C $$dir ; \
+		$(MAKE) -C $$dir $(SUBMAKE_RECIPE); \
 	done
 
 testLibs: 
@@ -32,9 +34,14 @@ cleanLibs:
 		$(MAKE) -C $$dir clean; \
 	done
 
-debug: makeLibs
+
+compile: makeLibs
 	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) $(FILES) $(LIB) $(INC) -o $(BUILD)/$(PROGRAM)
+
+debug: CFLAGS += -g
+debug: SUBMAKE_RECIPE = debug
+debug: compile
 
 run:
 	./$(BUILD)/$(PROGRAM)

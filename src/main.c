@@ -20,6 +20,7 @@
 #define memPoll 4
 #define storagePoll 256
 
+void pollingLoop(FILE* meminfoFp, FILE* uptimeFp, FILE* statFp,  uint16_t *ledArr);
 
 // get info from meminfo, stat, uptime
 int main(){
@@ -31,28 +32,29 @@ int main(){
     uptimeFp = fopen("/proc/uptime" , "r");
     FILE* statFp;
     statFp = fopen("/proc/stat" , "r");
-
-    char buff[BUFF_SIZE];
     
     uint16_t *ledArr = getLedArr();
+    clear(ledArr);
 
-    float storageUsage = 0.0;
+    pollingLoop(meminfoFp,uptimeFp,statFp,ledArr);
+
+    fclose(meminfoFp);
+    fclose(uptimeFp);
+    fclose(statFp);
+}
 
 
+void pollingLoop(FILE* meminfoFp, FILE* uptimeFp, FILE* statFp,  uint16_t *ledArr){
+    char buff[BUFF_SIZE];
 
     unsigned long memUsage = 0;
     unsigned long memTotal = 0;
     unsigned long uptime = 0;
-    float cpuUsage = 0.0;
-
-    clear(ledArr);
-
-    //binaryBar(ledArr,10,6,8,0.0,1.0,0.0);
-
     
-
+    float cpuUsage = 0.0;
+    float storageUsage = 0.0;
+    
     getUptime(uptimeFp,&uptime,buff,BUFF_SIZE);
-
     initLoopTimer();
 
     ulong tickNumber = 0; // monotonic
@@ -63,17 +65,14 @@ int main(){
         }
         if (tickNumber%cpuPoll == 0){
             getCpuUsage(statFp,&cpuUsage,buff,BUFF_SIZE);
-            printf("cpu: %f\n",cpuUsage);
             percentageBar(ledArr,cpuUsage,7);
         }
         if (tickNumber%memPoll == 0){
             getMemUsage(meminfoFp,&memUsage,&memTotal,buff,BUFF_SIZE);
-            logInfo("mem %f",(float)memUsage / (float)memTotal);
             percentageBar(ledArr,(float)memUsage / (float)memTotal,6);
         }
         if (tickNumber%storagePoll == 0){
             getStorageUsage(&storageUsage);
-            logInfo("stor %f",storageUsage);
             percentageBar(ledArr,(float)storageUsage,5);
         }
 
@@ -83,18 +82,5 @@ int main(){
         sleepRemainingLoop();
         uptime+=1;
         tickNumber += 1;
-    }
-
-
-
-    
-    getUptime(uptimeFp,&uptime,buff,BUFF_SIZE);
-    getCpuUsage(statFp,&cpuUsage,buff,BUFF_SIZE);
-    
-    getCpuUsage(statFp,&cpuUsage,buff,BUFF_SIZE);
-    
-
-    fclose(meminfoFp);
-    fclose(uptimeFp);
-    fclose(statFp);
+    }    
 }

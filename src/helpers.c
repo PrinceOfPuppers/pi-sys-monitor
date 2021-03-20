@@ -6,16 +6,18 @@
 #include <sense-api.h>
 #include <sense-helpers.h>
 
-//how period of each update loop
-//#define loopTimeNs (__syscall_slong_t)4000000000
+// how long each polling loop is
+#define loopTimeSec (__syscall_slong_t)1
 
-#define loopTimeSec (__syscall_slong_t) 1
+// structs used in clock_gettime and nanosleep
 struct timespec t1,t2;
 
+// prime the loop timer with the start time
 void initLoopTimer(){
     clock_gettime(CLOCK_MONOTONIC_COARSE,&t1);
 }
 
+// sleeps for enough time to make each loop exactly loopTimeSec long, called at end of loop
 void sleepRemainingLoop(){
     // get time of end of loop
     clock_gettime(CLOCK_MONOTONIC_COARSE,&t2);
@@ -31,10 +33,16 @@ void sleepRemainingLoop(){
     clock_gettime(CLOCK_MONOTONIC_COARSE,&t1);
 }
 
+
+
+
+
+
 float clampMin(float x, float min){
     return x < min ? min : x;
 } 
 
+// bar graph displaying value (between 0 and 1) with its height and color
 void percentageBar(uint16_t *ledArr, float value, int column){
     float b = clampMin(cos( M_PI*(4*value )/3 ),0.0);
     float g = clampMin(cos( M_PI*(4*value + 4)/3 ),0.0);
@@ -47,12 +55,11 @@ void percentageBar(uint16_t *ledArr, float value, int column){
     }
     for(;i < 8; i++){
         setVal(ledArr,i,column,rgbIntToHex(0,0,0));
-    }
-
-    
+    }   
 }
 
-// max is how many leds to override, binary can overflow one column and will continue on the next
+// shows 'number' in binary starting at the base of column 'column' and spanning rows 'maxRows'
+// ie) maxRows = 16 column = 0 will make the counter span the first 2 rows of the led matrix
 void binaryBar(uint16_t *ledArr, int number, int column, int maxRows, float r, float g, float b){
     float boolFloat;
     for(int i = 0; i<maxRows; i++){

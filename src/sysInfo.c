@@ -2,12 +2,11 @@
 #include "globals.h"
 #include "logging.h"
 
-
 #include <stdlib.h>
 
-unsigned long readValFromLine(FILE *fp, regmatch_t* matchGroup, char *buffer,size_t buffer_size){
-    // Get MemTotal
-    
+// reads long from current line in file, matchGroup and buffer are reused resources
+unsigned long readValFromLine(FILE *fp, regmatch_t* matchGroup, char *buffer,size_t buffer_size){    
+    // must flush fp, otherwise same values will be returned on every call
     fflush(fp);
     fgets(buffer,buffer_size-1,fp);
 
@@ -33,7 +32,7 @@ void getStorageUsage(float *usage){
     }
 
     *usage = (float)(glob.vfs.f_blocks - glob.vfs.f_bfree) / (float)glob.vfs.f_blocks;
-    logInfo("Storage Usage: %f",*usage);
+    logDebug("Storage Usage: %f%%",*usage*100.0);
 }
 
 void getMemUsage(FILE* fp, unsigned long *usage, unsigned long *total, char *buffer, size_t buffer_size){
@@ -44,6 +43,7 @@ void getMemUsage(FILE* fp, unsigned long *usage, unsigned long *total, char *buf
 
     // Get MemFree
     unsigned long free = readValFromLine(fp,matchGroup,buffer,buffer_size);
+
     // Skip MemAvalible
     fgets(buffer,buffer_size-1,fp);
 
@@ -53,7 +53,7 @@ void getMemUsage(FILE* fp, unsigned long *usage, unsigned long *total, char *buf
     // convert from kibibytes to bytes
     *usage = (*total - free - buffers - cached)*1024;
     *total *= 1024;
-    logInfo("Memory Usage: %lubytes / %lubytes", *usage, *total);
+    logDebug("Memory Usage: %lubytes / %lubytes", *usage, *total);
 
     fseek(fp, 0, SEEK_SET);
 }
@@ -65,7 +65,7 @@ void getUptime(FILE* fp, unsigned long* uptime, char *buffer, size_t buffer_size
     
     *uptime = readValFromLine(fp,matchGroup,buffer,buffer_size);
 
-    logInfo("System Uptime: %i",*uptime);
+    logDebug("System Uptime: %i",*uptime);
 
     fseek(fp, 0, SEEK_SET);
 }
@@ -111,7 +111,7 @@ void getCpuUsage(FILE* fp, float* usage, char *buffer, size_t buffer_size){
 
     *usage = (float)(dtotal - dnotWorking)/ (float)dtotal;
 
-    logInfo("CPU Usage: %f%%",*usage*100.0,(float)dtotal);
+    logDebug("CPU Usage: %f%%",*usage*100.0);
 
     glob.cpuStats.total = total;
     glob.cpuStats.notWorking = notWorking;
