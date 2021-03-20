@@ -5,14 +5,14 @@ BUILD = build
 PROGRAM = main
 CFLAGS= -Wall -g
 
-INC = -Iinclude -Ilib/clog/include
-LIB = -L ./lib -l:clog/lib/clog.a
+INC = -Iinclude -Ilib/clog/include -Ilib/rpi-sense-hat-api/include
+LIB = -lm -L ./lib -l:clog/lib/clog.a -l:rpi-sense-hat-api/lib/sense-api.a
 
 
 FILES = $(wildcard $(SRC)/*.c)
 
 # directories with makefiles which must be called
-SUBMAKE = lib/clog
+SUBMAKE = lib/clog lib/rpi-sense-hat-api
 
 
 all: debug run

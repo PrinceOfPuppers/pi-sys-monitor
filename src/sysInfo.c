@@ -7,6 +7,8 @@
 
 unsigned long readValFromLine(FILE *fp, regmatch_t* matchGroup, char *buffer,size_t buffer_size){
     // Get MemTotal
+    
+    fflush(fp);
     fgets(buffer,buffer_size-1,fp);
 
     if(regexec(&glob.intRegex,buffer, 1, matchGroup, 0)){
@@ -24,15 +26,14 @@ unsigned long readValFromLine(FILE *fp, regmatch_t* matchGroup, char *buffer,siz
     return atol(valPntr);    
 }
 
-void getStorageUsage(unsigned long *usage,unsigned long *total){
+void getStorageUsage(float *usage){
     if (statvfs("/", &glob.vfs) != 0) {
         logErr("Unable to parse VFS");
         return;
     }
-    *total = glob.vfs.f_blocks * glob.vfs.f_frsize;
-    *usage = *total - glob.vfs.f_bsize * glob.vfs.f_bavail;
 
-    logInfo("Storage Usage: %lubytes / %lubytes",*usage, *total);
+    *usage = (float)(glob.vfs.f_blocks - glob.vfs.f_bfree) / (float)glob.vfs.f_blocks;
+    logInfo("Storage Usage: %f",*usage);
 }
 
 void getMemUsage(FILE* fp, unsigned long *usage, unsigned long *total, char *buffer, size_t buffer_size){
@@ -79,6 +80,7 @@ void getCpuUsage(FILE* fp, float* usage, char *buffer, size_t buffer_size){
 
     regmatch_t matchGroup[9];
 
+    fflush(fp);
     fgets(buffer,buffer_size-1,fp);
 
     notSuccess = regexec(&glob.cpuRegex,buffer, 9, matchGroup, 0);
@@ -108,7 +110,8 @@ void getCpuUsage(FILE* fp, float* usage, char *buffer, size_t buffer_size){
     int dnotWorking = notWorking - glob.cpuStats.notWorking;
 
     *usage = (float)(dtotal - dnotWorking)/ (float)dtotal;
-    logInfo("CPU Usage: %f%%",*usage*100.0);
+
+    logInfo("CPU Usage: %f%%",*usage*100.0,(float)dtotal);
 
     glob.cpuStats.total = total;
     glob.cpuStats.notWorking = notWorking;

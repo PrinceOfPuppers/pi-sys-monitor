@@ -1,3 +1,6 @@
 [submodule "lib/clog"]
 	path = lib/clog
 	url = https://github.com/PrinceOfPuppers/clog
+[submodule "lib/rpi-sense-hat-api"]
+	path = lib/rpi-sense-hat-api
+	url = https://github.com/PrinceOfPuppers/rpi-sense-hat-api.git

@@ -2,7 +2,7 @@
 #include <sys/statvfs.h>
 #pragma once
 
-void getStorageUsage(unsigned long* usage, unsigned long* total);
+void getStorageUsage(float* usage);
 
 void getMemUsage(FILE* fp, unsigned long *usage, unsigned long *total, char *buffer, size_t buffer_size);
 
