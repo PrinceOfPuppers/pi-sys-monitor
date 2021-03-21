@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sense-api.h>
 #include <stdint.h>
+#include <signal.h>
 
 #include "helpers.h"
 #include "globals.h"
@@ -11,20 +12,28 @@
 #include "sysInfo.h"
 #include "logging.h"
 
-#define staticLogLevel debug
 #define BUFF_SIZE 256
 
 // polling times (in loop ticks)
-#define uptimePoll 64 // uptime is incremented once per loop automatically, but checked this often for errors
+#define uptimePoll 1024 // uptime is incremented once per loop automatically, but checked this often for errors
 #define cpuPoll 1
-#define memPoll 4
-#define storagePoll 256
+#define memPoll 8
+#define storagePoll 1024
+
+
+int running;
+void inturruptHandler(int signum){
+    running = 0;
+}
 
 void pollingLoop(FILE* meminfoFp, FILE* uptimeFp, FILE* statFp,  uint16_t *ledArr);
 
 // get info from meminfo, stat, uptime
 int main(){
     initGlobals();
+    signal(SIGINT,inturruptHandler);
+    signal(SIGTERM,inturruptHandler);
+    running = 1;
 
     FILE* meminfoFp;
     meminfoFp = fopen("/proc/meminfo" , "r");
@@ -37,10 +46,15 @@ int main(){
     clear(ledArr);
 
     pollingLoop(meminfoFp,uptimeFp,statFp,ledArr);
-
+    
+    clear(ledArr);
     fclose(meminfoFp);
     fclose(uptimeFp);
     fclose(statFp);
+
+    unmapLedArr(ledArr);
+
+    return 0;
 }
 
 
@@ -58,8 +72,8 @@ void pollingLoop(FILE* meminfoFp, FILE* uptimeFp, FILE* statFp,  uint16_t *ledAr
     initLoopTimer();
 
     ulong tickNumber = 0; // monotonic
-    while(1){
-        
+    while(running){
+        logDebug("Tick Number: %li",tickNumber);
         if (tickNumber%uptimePoll == 0){
             getUptime(uptimeFp,&uptime,buff,BUFF_SIZE);
         }
@@ -77,8 +91,7 @@ void pollingLoop(FILE* meminfoFp, FILE* uptimeFp, FILE* statFp,  uint16_t *ledAr
         }
 
         binaryBar(ledArr,uptime,0,32,1.0,1.0,1.0);
-        
-        printf("%li: tick...\n",tickNumber);
+        logDebug("---------------------------------")
         sleepRemainingLoop();
         uptime+=1;
         tickNumber += 1;

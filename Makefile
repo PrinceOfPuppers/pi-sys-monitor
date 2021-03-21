@@ -2,7 +2,7 @@ CC = gcc
 
 SRC = src
 BUILD = build
-PROGRAM = main
+PROGRAM = rpi-sys-monitor
 CFLAGS= -Wall 
 
 INC = -Iinclude -Ilib/clog/include -Ilib/rpi-sense-hat-api/include
