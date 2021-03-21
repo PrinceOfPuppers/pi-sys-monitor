@@ -31,6 +31,8 @@ void pollingLoop(FILE* meminfoFp, FILE* uptimeFp, FILE* statFp,  uint16_t *ledAr
 // get info from meminfo, stat, uptime
 int main(){
     initGlobals();
+    setLogLevel(error);
+    
     signal(SIGINT,inturruptHandler);
     signal(SIGTERM,inturruptHandler);
     running = 1;
