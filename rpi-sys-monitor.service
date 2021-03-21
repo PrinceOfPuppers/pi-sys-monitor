@@ -1,0 +1,12 @@
+[Unit]
+Description=rpi sense hat system monitor
+                                        
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/rpi-sys-monitor
+Restart=on-failure
+RestartSec=10
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

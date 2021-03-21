@@ -8,14 +8,9 @@ sudo chmod +x "build/$PROGRAM"
 
 sudo cp "build/$PROGRAM" $BIN_LOCATION
 
-sudo touch $PROGRAM.service
+sudo cp $PROGRAM.service $SERVICE_FILE
+sudo chmod 640 $SERVICE_FILE
 
-echo "[Unit]"                                   | sudo tee -a $PROGRAM.service
-echo "Description=rpi sense hat system monitor" | sudo tee -a $PROGRAM.service
-echo ""                                         | sudo tee -a $PROGRAM.service
-
-echo "[Service]"                                | sudo tee -a $PROGRAM.service
-echo "ExecStart=$BIN_LOCATION"                  | sudo tee -a $PROGRAM.service
-
-sudo mv $PROGRAM.service $SERVICE_FILE
+sudo systemctl daemon-reload
+sudo systemctl enable $PROGRAM
 sudo systemctl start $PROGRAM
