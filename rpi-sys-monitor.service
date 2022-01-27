@@ -1,5 +1,7 @@
 [Unit]
 Description=rpi sense hat system monitor
+After=rpi-eeprom-update.service
+SyslogIdentifier=rpi-sys-monitor
                                         
 [Service]
 Type=simple
